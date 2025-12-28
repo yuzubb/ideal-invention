@@ -1,0 +1,671 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>システムモニター Pro</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #0a0e1a;
+      color: #fff;
+      overflow-x: hidden;
+    }
+
+    .background {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: radial-gradient(circle at 20% 50%, rgba(16, 185, 129, 0.15) 0%, transparent 50%),
+                  radial-gradient(circle at 80% 80%, rgba(59, 130, 246, 0.15) 0%, transparent 50%),
+                  radial-gradient(circle at 40% 20%, rgba(139, 92, 246, 0.1) 0%, transparent 50%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .container {
+      position: relative;
+      z-index: 1;
+      max-width: 1600px;
+      margin: 0 auto;
+      padding: 40px 20px;
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 50px;
+      animation: fadeInDown 0.8s ease;
+    }
+
+    .header h1 {
+      font-size: 3.5rem;
+      font-weight: 800;
+      background: linear-gradient(135deg, #10b981, #3b82f6, #8b5cf6);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 10px;
+      letter-spacing: -1px;
+    }
+
+    .header p {
+      color: #64748b;
+      font-size: 1.1rem;
+    }
+
+    .main-grid {
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: 25px;
+      margin-bottom: 25px;
+    }
+
+    .cpu-section {
+      background: rgba(15, 23, 42, 0.8);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(16, 185, 129, 0.2);
+      border-radius: 25px;
+      padding: 40px;
+      box-shadow: 0 20px 60px rgba(16, 185, 129, 0.1);
+      animation: fadeInUp 0.8s ease;
+    }
+
+    .cpu-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 30px;
+    }
+
+    .cpu-title {
+      font-size: 1.5rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .cpu-icon {
+      width: 40px;
+      height: 40px;
+      background: linear-gradient(135deg, #10b981, #059669);
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.3rem;
+    }
+
+    .cpu-display {
+      text-align: center;
+      margin-bottom: 40px;
+    }
+
+    .cpu-value {
+      font-size: 5rem;
+      font-weight: 900;
+      background: linear-gradient(135deg, #10b981, #34d399);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      line-height: 1;
+      text-shadow: 0 0 40px rgba(16, 185, 129, 0.3);
+    }
+
+    .cpu-label {
+      color: #64748b;
+      font-size: 0.9rem;
+      text-transform: uppercase;
+      letter-spacing: 3px;
+      margin-top: 10px;
+    }
+
+    .chart-wrapper {
+      position: relative;
+      height: 200px;
+      background: rgba(0, 0, 0, 0.3);
+      border-radius: 15px;
+      padding: 20px;
+      overflow: hidden;
+      margin-bottom: 25px;
+    }
+
+    .bars-container {
+      position: absolute;
+      bottom: 20px;
+      left: 20px;
+      right: 20px;
+      top: 20px;
+      display: flex;
+      align-items: flex-end;
+      gap: 2px;
+    }
+
+    .bar {
+      flex: 1;
+      background: linear-gradient(to top, #10b981, #34d399, #6ee7b7);
+      border-radius: 3px 3px 0 0;
+      min-width: 2px;
+      transition: all 0.3s ease;
+      box-shadow: 0 0 20px rgba(16, 185, 129, 0.4);
+    }
+
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 15px;
+    }
+
+    .stat-box {
+      background: rgba(0, 0, 0, 0.3);
+      padding: 20px;
+      border-radius: 12px;
+      text-align: center;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .stat-label {
+      color: #64748b;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 8px;
+    }
+
+    .stat-value {
+      font-size: 1.8rem;
+      font-weight: 700;
+      background: linear-gradient(135deg, #10b981, #34d399);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .info-grid {
+      display: grid;
+      gap: 25px;
+    }
+
+    .info-card {
+      background: rgba(15, 23, 42, 0.8);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(59, 130, 246, 0.2);
+      border-radius: 20px;
+      padding: 30px;
+      box-shadow: 0 20px 60px rgba(59, 130, 246, 0.1);
+      animation: fadeInRight 0.8s ease;
+      transition: transform 0.3s, box-shadow 0.3s;
+    }
+
+    .info-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 25px 70px rgba(59, 130, 246, 0.2);
+    }
+
+    .card-header {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      margin-bottom: 25px;
+      padding-bottom: 15px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .card-icon {
+      width: 50px;
+      height: 50px;
+      background: linear-gradient(135deg, #3b82f6, #2563eb);
+      border-radius: 15px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+    }
+
+    .card-title {
+      font-size: 1.3rem;
+      font-weight: 700;
+    }
+
+    .info-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 15px 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .info-row:last-child {
+      border-bottom: none;
+    }
+
+    .info-label {
+      color: #94a3b8;
+      font-size: 0.95rem;
+      font-weight: 500;
+    }
+
+    .info-value {
+      color: #fff;
+      font-weight: 700;
+      font-size: 1rem;
+      text-align: right;
+      max-width: 60%;
+      word-break: break-word;
+    }
+
+    .progress-bar {
+      width: 100%;
+      height: 8px;
+      background: rgba(0, 0, 0, 0.3);
+      border-radius: 10px;
+      overflow: hidden;
+      margin-top: 8px;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #10b981, #34d399);
+      border-radius: 10px;
+      transition: width 0.5s ease;
+      box-shadow: 0 0 10px rgba(16, 185, 129, 0.5);
+    }
+
+    .status-indicator {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 16px;
+      background: rgba(16, 185, 129, 0.1);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      border-radius: 20px;
+      font-size: 0.85rem;
+      color: #10b981;
+    }
+
+    .pulse-dot {
+      width: 8px;
+      height: 8px;
+      background: #10b981;
+      border-radius: 50%;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% {
+        opacity: 1;
+        transform: scale(1);
+        box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+      }
+      50% {
+        opacity: 0.8;
+        transform: scale(1.1);
+        box-shadow: 0 0 0 10px rgba(16, 185, 129, 0);
+      }
+    }
+
+    @keyframes fadeInDown {
+      from {
+        opacity: 0;
+        transform: translateY(-30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes fadeInRight {
+      from {
+        opacity: 0;
+        transform: translateX(30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateX(0);
+      }
+    }
+
+    .grid-2 {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 25px;
+      margin-top: 25px;
+    }
+
+    @media (max-width: 1200px) {
+      .main-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .grid-2 {
+        grid-template-columns: 1fr;
+      }
+      .header h1 {
+        font-size: 2.5rem;
+      }
+      .cpu-value {
+        font-size: 4rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="background"></div>
+  
+  <div class="container">
+    <div class="header">
+      <h1>⚡ SYSTEM MONITOR PRO</h1>
+      <p>リアルタイムシステム情報ダッシュボード</p>
+    </div>
+
+    <div class="main-grid">
+      <div class="cpu-section">
+        <div class="cpu-header">
+          <div class="cpu-title">
+            <div class="cpu-icon">🔥</div>
+            <span>CPU パフォーマンス</span>
+          </div>
+          <div class="status-indicator">
+            <div class="pulse-dot"></div>
+            <span>リアルタイム</span>
+          </div>
+        </div>
+
+        <div class="cpu-display">
+          <div class="cpu-value" id="cpuValue">0.0%</div>
+          <div class="cpu-label">CPU 使用率</div>
+        </div>
+
+        <div class="chart-wrapper">
+          <div class="bars-container" id="barsContainer"></div>
+        </div>
+
+        <div class="stats-row">
+          <div class="stat-box">
+            <div class="stat-label">最小</div>
+            <div class="stat-value" id="minCpu">0%</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-label">平均</div>
+            <div class="stat-value" id="avgCpu">0%</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-label">最大</div>
+            <div class="stat-value" id="maxCpu">0%</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="info-grid">
+        <div class="info-card">
+          <div class="card-header">
+            <div class="card-icon">💾</div>
+            <div class="card-title">メモリ</div>
+          </div>
+          <div class="info-row">
+            <span class="info-label">使用中</span>
+            <span class="info-value" id="memUsed">-</span>
+          </div>
+          <div class="progress-bar">
+            <div class="progress-fill" id="memProgress"></div>
+          </div>
+          <div class="info-row">
+            <span class="info-label">合計</span>
+            <span class="info-value" id="memTotal">-</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">空き</span>
+            <span class="info-value" id="memFree">-</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid-2">
+      <div class="info-card">
+        <div class="card-header">
+          <div class="card-icon">🖥️</div>
+          <div class="card-title">システム情報</div>
+        </div>
+        <div class="info-row">
+          <span class="info-label">OS</span>
+          <span class="info-value" id="osInfo">-</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">カーネル</span>
+          <span class="info-value" id="kernel">-</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">アーキテクチャ</span>
+          <span class="info-value" id="arch">-</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">ホスト名</span>
+          <span class="info-value" id="hostname">-</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">稼働時間</span>
+          <span class="info-value" id="uptime">-</span>
+        </div>
+      </div>
+
+      <div class="info-card">
+        <div class="card-header">
+          <div class="card-icon">⚙️</div>
+          <div class="card-title">CPU詳細</div>
+        </div>
+        <div class="info-row">
+          <span class="info-label">モデル</span>
+          <span class="info-value" id="cpuModel">-</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">コア数</span>
+          <span class="info-value" id="cpuCores">-</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">クロック</span>
+          <span class="info-value" id="cpuSpeed">-</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">温度</span>
+          <span class="info-value" id="cpuTemp">-</span>
+        </div>
+      </div>
+
+      <div class="info-card" id="batteryCard" style="display: none;">
+        <div class="card-header">
+          <div class="card-icon">🔋</div>
+          <div class="card-title">バッテリー</div>
+        </div>
+        <div class="info-row">
+          <span class="info-label">残量</span>
+          <span class="info-value" id="batteryPercent">-</span>
+        </div>
+        <div class="progress-bar">
+          <div class="progress-fill" id="batteryProgress"></div>
+        </div>
+        <div class="info-row">
+          <span class="info-label">充電状態</span>
+          <span class="info-value" id="batteryCharging">-</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">残り時間</span>
+          <span class="info-value" id="batteryTime">-</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">タイプ</span>
+          <span class="info-value" id="batteryType">-</span>
+        </div>
+      </div>
+
+      <div class="info-card">
+        <div class="card-header">
+          <div class="card-icon">🎮</div>
+          <div class="card-title">グラフィックス</div>
+        </div>
+        <div id="graphicsInfo"></div>
+      </div>
+    </div>
+
+    <div class="grid-2" style="margin-top: 25px;">
+      <div class="info-card">
+        <div class="card-header">
+          <div class="card-icon">💿</div>
+          <div class="card-title">ディスク</div>
+        </div>
+        <div id="diskInfo"></div>
+      </div>
+
+      <div class="info-card">
+        <div class="card-header">
+          <div class="card-icon">🌐</div>
+          <div class="card-title">ネットワーク</div>
+        </div>
+        <div id="networkInfo"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const cpuData = [];
+    const maxBars = 60;
+
+    function formatUptime(seconds) {
+      const days = Math.floor(seconds / 86400);
+      const hours = Math.floor((seconds % 86400) / 3600);
+      const minutes = Math.floor((seconds % 3600) / 60);
+      return `${days}日 ${hours}時間 ${minutes}分`;
+    }
+
+    async function updateSystemInfo() {
+      try {
+        const response = await fetch('/api/system');
+        const data = await response.json();
+
+        // CPU
+        const cpuUsage = data.cpu.usage;
+        cpuData.push(cpuUsage);
+        if (cpuData.length > maxBars) cpuData.shift();
+
+        document.getElementById('cpuValue').textContent = `${cpuUsage.toFixed(1)}%`;
+        document.getElementById('cpuModel').textContent = data.cpu.model;
+        document.getElementById('cpuCores').textContent = `${data.cpu.cores} コア`;
+        document.getElementById('cpuSpeed').textContent = `${data.cpu.speed} GHz`;
+        document.getElementById('cpuTemp').textContent = data.cpu.temperature ? 
+          `${data.cpu.temperature}°C` : 'N/A';
+
+        // Update bars
+        const container = document.getElementById('barsContainer');
+        container.innerHTML = '';
+        cpuData.forEach(value => {
+          const bar = document.createElement('div');
+          bar.className = 'bar';
+          bar.style.height = `${value}%`;
+          container.appendChild(bar);
+        });
+
+        // Stats
+        if (cpuData.length > 0) {
+          const min = Math.min(...cpuData);
+          const max = Math.max(...cpuData);
+          const avg = cpuData.reduce((a, b) => a + b, 0) / cpuData.length;
+          
+          document.getElementById('minCpu').textContent = `${min.toFixed(1)}%`;
+          document.getElementById('maxCpu').textContent = `${max.toFixed(1)}%`;
+          document.getElementById('avgCpu').textContent = `${avg.toFixed(1)}%`;
+        }
+
+        // Memory
+        document.getElementById('memUsed').textContent = `${data.memory.used} GB (${data.memory.usagePercent}%)`;
+        document.getElementById('memTotal').textContent = `${data.memory.total} GB`;
+        document.getElementById('memFree').textContent = `${data.memory.free} GB`;
+        document.getElementById('memProgress').style.width = `${data.memory.usagePercent}%`;
+
+        // OS
+        document.getElementById('osInfo').textContent = `${data.os.distro} ${data.os.release}`;
+        document.getElementById('kernel').textContent = data.os.kernel;
+        document.getElementById('arch').textContent = data.os.arch;
+        document.getElementById('hostname').textContent = data.os.hostname;
+        document.getElementById('uptime').textContent = formatUptime(data.os.uptime);
+
+        // Battery
+        if (data.battery.hasBattery) {
+          document.getElementById('batteryCard').style.display = 'block';
+          document.getElementById('batteryPercent').textContent = `${data.battery.percent}%`;
+          document.getElementById('batteryProgress').style.width = `${data.battery.percent}%`;
+          document.getElementById('batteryCharging').textContent = data.battery.isCharging ? '充電中' : '放電中';
+          document.getElementById('batteryTime').textContent = data.battery.timeRemaining > 0 ? 
+            `${Math.round(data.battery.timeRemaining)} 分` : 'N/A';
+          document.getElementById('batteryType').textContent = data.battery.type || 'N/A';
+        }
+
+        // Graphics
+        const graphicsHtml = data.graphics.controllers.map(g => `
+          <div class="info-row">
+            <span class="info-label">${g.vendor}</span>
+            <span class="info-value">${g.model}</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">VRAM</span>
+            <span class="info-value">${g.vram ? g.vram + ' MB' : 'N/A'}</span>
+          </div>
+        `).join('');
+        document.getElementById('graphicsInfo').innerHTML = graphicsHtml;
+
+        // Disk
+        const diskHtml = data.disk.map(d => `
+          <div class="info-row">
+            <span class="info-label">${d.mount}</span>
+            <span class="info-value">${d.used} GB / ${d.size} GB</span>
+          </div>
+          <div class="progress-bar">
+            <div class="progress-fill" style="width: ${d.usePercent}%"></div>
+          </div>
+        `).join('');
+        document.getElementById('diskInfo').innerHTML = diskHtml;
+
+        // Network
+        const networkHtml = data.network.map(n => `
+          <div class="info-row">
+            <span class="info-label">${n.iface}</span>
+            <span class="info-value">${n.ip4 || 'N/A'}</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">MAC</span>
+            <span class="info-value">${n.mac}</span>
+          </div>
+        `).join('');
+        document.getElementById('networkInfo').innerHTML = networkHtml;
+
+      } catch (error) {
+        console.error('Error fetching system info:', error);
+      }
+    }
+
+    // Update every second
+    updateSystemInfo();
+    setInterval(updateSystemInfo, 1000);
+  </script>
+</body>
+</html>
